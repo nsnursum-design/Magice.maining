@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>MAGIC </title>
+
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  
+  <!-- Original Fantasy Stone Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #09060e;
+      --stone-texture: #dad3c1;
+      --stone-border: #7c7261;
+      --stone-shadow: #2a2319;
+      --parchment-bg: #ece4d2;
+      --parchment-border: #8c826f;
+      --font-gothic: 'Cinzel', serif;
+      --font-body: 'Nunito', sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+      background-color: var(--bg-dark);
+      font-family: var(--font-body);
+      color: #241e17;
+    }
+
+    .mystic-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: radial-gradient(circle at 50% 30%, #2a2236 0%, #120c1a 75%, #050308 100%);
+    }
+
+    .altar-glow {
+      position: absolute;
+      top: 32%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 360px;
+      height: 360px;
+      background: radial-gradient(circle, rgba(255, 183, 77, 0.35) 0%, rgba(255, 193, 7, 0.08) 55%, transparent 75%);
+      filter: blur(45px);
+      animation: pulseAltar 4s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulseAltar {
+      0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.7; }
+      100% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+    }
+
+    .app-viewport {
+      position: relative;
+      z-index: 10;
+      max-width: 440px;
+      min-height: 100vh;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      padding: 10px 14px 20px 14px;
+    }
+
+    /* Top Carved Stone Header */
+    .top-nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .stone-pill {
+      background: var(--stone-texture);
+      border: 2px solid var(--stone-border);
+      border-radius: 14px;
+      box-shadow: inset 1px 1px 0px #fff, inset -1px -1px 0px var(--stone-shadow), 0 4px 8px rgba(0,0,0,0.6);
+      padding: 5px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .balance-pill { min-width: 145px; }
+    .balance-pill .pill-label { font-size: 12px; font-weight: 800; color: #4a4032; }
+    .pill-value-row { display: flex; align-items: center; gap: 6px; }
+
+    /* Golden Star-Shield Coin */
+    .star-coin-icon {
+      width: 22px;
+      height: 22px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .star-coin-icon-sm { width: 18px; height: 18px; }
+    .star-coin-icon-xs { width: 14px; height: 14px; }
+
+    .gem-count { font-size: 20px; font-weight: 900; color: #1a150e; font-family: var(--font-gothic); }
+
+    .user-profile-header { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .avatar-ring {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid #ffd54f;
+      overflow: hidden;
+      box-shadow: 0 0 12px rgba(255, 213, 79, 0.4);
+      background: #23192f;
+    }
+    .avatar-ring img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-btn-label { padding: 10px 16px; font-family: var(--font-gothic); font-weight: 800; font-size: 14px; }
+
+    /* Ribbon Tabs */
+    .quick-action-ribbon {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .ribbon-btn {
+      background: var(--stone-texture);
+      border: 2px solid var(--stone-border);
+      border-radius: 10px;
+      padding: 9px 0;
+      font-family: var(--font-gothic);
+      font-size: 13px;
+      font-weight: 800;
+      color: #272018;
+      cursor: pointer;
+      box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 var(--stone-shadow), 0 3px 6px rgba(0,0,0,0.5);
+      transition: all 0.1s ease;
+    }
+
+    .ribbon-btn.active {
+      background: #bfb6a4;
+      border-color: #4e4436;
+      box-shadow: inset 1px 2px 4px rgba(0, 0, 0, 0.45);
+      transform: translateY(1px);
+    }
+
+    .game-view-panel {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      padding-bottom: 20px;
+    }
+    .game-view-panel.active { display: flex; }
+
+    /* Daily Income Card */
+    .parchment-summary-card {
+      background: var(--parchment-bg);
+      border: 2px solid var(--parchment-border);
+      border-radius: 14px;
+      padding: 8px 16px;
+      box-shadow: inset 1px 1px 0 #fff, 0 4px 10px rgba(0,0,0,0.6);
+    }
+    .income-row { display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 800; }
+    .income-value { display: flex; align-items: center; gap: 6px; font-family: var(--font-gothic); font-weight: 800; }
+
+    /* Magician Center Stage */
+    .magicians-stage-layout {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 8px;
+    }
+
+    .carved-stone-card {
+      background: var(--parchment-bg);
+      border: 2px solid var(--parchment-border);
+      border-radius: 14px;
+      padding: 8px;
+      box-shadow: inset 1px 1px 0 #fff, 0 4px 12px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 290px;
+    }
+
+    .mage-portrait-wrap {
+      position: relative;
+      width: 100%;
+      height: 180px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      border-radius: 8px;
+    }
+
+    .main-mage-img { width: 100%; height: 100%; object-fit: cover; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
+    .slot-count-badge {
+      position: absolute;
+      bottom: 4px;
+      background: #fdfbf7;
+      border: 2px solid var(--parchment-border);
+      border-radius: 8px;
+      font-family: var(--font-gothic);
+      font-weight: 900;
+      font-size: 15px;
+      padding: 2px 14px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    }
+
+    .production-accumulator {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin: 8px 0;
+      font-family: var(--font-gothic);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .stone-bevel-button {
+      width: 100%;
+      background: linear-gradient(180deg, #b3aa9b 0%, #756c5e 100%);
+      border: 2px solid #524a3e;
+      border-radius: 8px;
+      padding: 8px 0;
+      font-family: var(--font-gothic);
+      font-size: 13px;
+      font-weight: 900;
+      color: #17130e;
+      cursor: pointer;
+      box-shadow: inset 1px 1px 0 #ded8cc, 0 3px 6px rgba(0,0,0,0.4);
+    }
+    .stone-bevel-button:active { transform: translateY(1px); box-shadow: inset 1px 2px 4px rgba(0,0,0,0.6); }
+
+    /* 3x4 Grid */
+    .mage-grid-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .slot-item {
+      background: var(--parchment-bg);
+      border: 2px solid var(--parchment-border);
+      border-radius: 12px;
+      height: 68px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 1px 1px 0 #fff;
+      position: relative;
+      padding: 2px;
+    }
+    .slot-item.locked { opacity: 0.65; background: #d6cebc; }
+    .slot-img { width: 32px; height: 32px; object-fit: contain; border-radius: 4px; }
+    .slot-name { font-size: 8px; font-weight: 800; max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #3b2c20; line-height: 1; margin-top: 1px; }
+    .slot-qty { font-family: var(--font-gothic); font-weight: 900; font-size: 12px; margin-top: 1px; line-height: 1; }
+
+    /* Power Bar */
+    .magic-level-bar-section { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+    .level-meta { display: flex; justify-content: space-between; font-size: 13px; font-weight: 800; color: #dfd7cc; }
+    .progress-track { width: 100%; height: 8px; background: rgba(0,0,0,0.65); border: 1px solid #4a3e56; border-radius: 5px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #9333ea); border-radius: 5px; transition: width 0.3s ease; }
+
+    /* Dynamic Project Shelf */
+    .dynamic-project-shelf { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; min-height: 160px; margin-top: 4px; }
+    .empty-shelf-notice {
+      grid-column: 1 / -1;
+      background: rgba(234, 227, 210, 0.4);
+      border: 2px dashed #7a705e;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #bbb09d;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 30px;
+      text-align: center;
+    }
+    .tome-card {
+      background: var(--parchment-bg);
+      border: 2px solid var(--parchment-border);
+      border-radius: 12px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: inset 1px 1px 0 #fff, 0 4px 8px rgba(0,0,0,0.45);
+      cursor: pointer;
+      min-height: 165px;
+    }
+    .tome-img-container { width: 100%; height: 75px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 8px; background: rgba(0,0,0,0.05); }
+    .tome-card-img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.35)); }
+    .tome-card-name { font-size: 10px; font-weight: 900; color: #272018; text-align: center; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-top: 2px; }
+    .tome-boost-label { font-size: 11px; font-weight: 800; color: #3b2b1d; margin: 2px 0; text-align: center; }
+    .tome-buy-btn {
+      background: linear-gradient(180deg, #b3aa9b 0%, #756c5e 100%);
+      border: 1.5px solid #524a3e;
+      border-radius: 8px;
+      padding: 5px 8px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--font-gothic);
+      font-size: 11px;
+      font-weight: 900;
+      width: 95%;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .tome-buy-btn.disabled {
+      background: #8e877c;
+      color: #3b352b;
+      cursor: not-allowed;
+      border-color: #554d41;
+    }
+
+    /* Long Parchment Lists */
+    .parchment-row-card {
+      background: var(--parchment-bg);
+      border: 2px solid var(--parchment-border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: inset 1px 1px 0 #fff, 0 3px 6px rgba(0,0,0,0.35);
+    }
+    .token-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+      background: #7c7261;
+    }
+    .token-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .token-detail { display: flex; flex-direction: column; flex: 1; margin-left: 12px; }
+    .token-name { font-weight: 800; font-size: 14px; }
+    .token-sub { font-size: 11.5px; color: #55483a; font-weight: 700; }
+
+    .stone-action-btn {
+      background: linear-gradient(180deg, #b3aa9b 0%, #756c5e 100%);
+      border: 2px solid #524a3e;
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-family: var(--font-gothic);
+      font-weight: 800;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    /* Partners Page Styling */
+    .ref-input-box {
+      background: transparent;
+      border: none;
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 800;
+      color: #272018;
+      flex: 1;
+      padding: 0 6px;
+      outline: none;
+    }
+
+    .perks-tri-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 2px;
+      margin-bottom: 6px;
+    }
+
+    .perk-box {
+      background: var(--parchment-bg) !important;
+      border: 2px solid var(--parchment-border) !important;
+      border-radius: 12px;
+      padding: 10px 6px;
+      text-align: center;
+      box-shadow: inset 1px 1px 0 #fff, 0 3px 6px rgba(0,0,0,0.35);
+    }
+
+    .perk-badge {
+      font-family: var(--font-gothic);
+      font-weight: 900;
+      font-size: 13px;
+      color: #17130e !important;
+      margin-bottom: 4px;
+    }
+
+    .perk-box p {
+      font-size: 10px;
+      line-height: 1.3;
+      color: #3b2c20 !important;
+      font-weight: 800;
+    }
+
+    .parchment-table-box {
+      background: var(--parchment-bg) !important;
+      border: 2px solid var(--parchment-border) !important;
+      border-radius: 14px;
+      padding: 12px 10px;
+      box-shadow: inset 1px 1px 0 #fff, 0 4px 8px rgba(0,0,0,0.4);
+    }
+
+    .table-stats-header {
+      display: flex;
+      justify-content: space-around;
+      border-bottom: 1.5px solid #baa996;
+      padding-bottom: 8px;
+      text-align: center;
+    }
+
+    .table-stats-header h4 {
+      font-size: 16px;
+      color: #17130e;
+      font-weight: 900;
+      font-family: var(--font-gothic);
+    }
+
+    .table-columns-bar {
+      display: grid;
+      grid-template-columns: 2fr 2fr 1.5fr 1.5fr;
+      font-size: 11px;
+      font-weight: 900;
+      color: #4a3e30 !important;
+      padding: 10px 0 8px 0;
+      border-bottom: 1px solid #baa996;
+    }
+
+    .empty-table-notice {
+      text-align: center;
+      font-size: 12px;
+      color: #635340 !important;
+      padding: 16px 0;
+      font-weight: 800;
+    }
+
+    /* Modals */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .drawer-parchment-card {
+      width: 100%;
+      max-width: 400px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: var(--parchment-bg);
+      border: 3px solid var(--parchment-border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.9);
+    }
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #baa996;
+      padding-bottom: 8px;
+    }
+    .drawer-close-btn { background: transparent; border: none; font-size: 22px; font-weight: 900; cursor: pointer; }
+
+    .user-form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+    .user-form-group label { font-size: 12px; font-weight: 800; color: #4a3e30; }
+    .user-input {
+      background: #fff;
+      border: 1.5px solid var(--parchment-border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-family: var(--font-body);
+      outline: none;
+    }
+    .user-submit-btn {
+      width: 100%;
+      background: #2e7d32;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: 800;
+      cursor: pointer;
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
+    .history-entry-card {
+      background: rgba(255,255,255,0.65);
+      border: 1.5px solid var(--parchment-border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+    .status-badge {
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 900;
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+    .status-pending { background: #ffe082; color: #795548; }
+    .status-approved { background: #a5d6a7; color: #1b5e20; }
+    .status-rejected { background: #ef9a9a; color: #b71c1c; }
+
+    .lang-btn {
+      margin-top: 10px;
+      align-self: flex-start;
+      background: var(--stone-texture);
+      border: 1.5px solid var(--stone-border);
+      border-radius: 8px;
+      padding: 4px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 900;
+      color: #272018;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Reusable SVG Asset for Golden Star Shield Coin -->
+  <svg style="display:none;">
+    <defs>
+      <linearGradient id="goldCoinBase" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#fff59d" />
+        <stop offset="35%" stop-color="#fbc02d" />
+        <stop offset="85%" stop-color="#f57f17" />
+        <stop offset="100%" stop-color="#bf360c" />
+      </linearGradient>
+      <linearGradient id="goldCoinEdge" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#fff9c4" />
+        <stop offset="50%" stop-color="#fbc02d" />
+        <stop offset="100%" stop-color="#e65100" />
+      </linearGradient>
+      <g id="star-shield-coin">
+        <ellipse cx="16" cy="17" rx="14" ry="10" fill="#e65100" />
+        <ellipse cx="16" cy="15" rx="14" ry="10" fill="url(#goldCoinEdge)" stroke="#fff59d" stroke-width="0.8"/>
+        <ellipse cx="16" cy="14" rx="12" ry="8" fill="url(#goldCoinBase)" />
+        <path d="M12 11 Q16 9 20 11 L20 15 Q16 19 12 15 Z" fill="#fff9c4" opacity="0.9" />
+        <polygon points="16,11.5 17,13.8 19.5,14 17.5,15.5 18.2,17.8 16,16.5 13.8,17.8 14.5,15.5 12.5,14 15,13.8" fill="#f57f17" />
+        <circle cx="9" cy="12" r="0.7" fill="#fff" />
+        <circle cx="10" cy="10" r="0.7" fill="#fff" />
+        <circle cx="13" cy="8.5" r="0.7" fill="#fff" />
+        <circle cx="16" cy="7.8" r="0.7" fill="#fff" />
+        <circle cx="19" cy="8.5" r="0.7" fill="#fff" />
+        <circle cx="22" cy="10" r="0.7" fill="#fff" />
+        <circle cx="23" cy="12" r="0.7" fill="#fff" />
+      </g>
+    </defs>
+  </svg>
+
+  <div class="mystic-bg">
+    <div class="altar-glow"></div>
+  </div>
+
+  <!-- Main Viewport (USER PANEL ONLY) -->
+  <main class="app-viewport">
+    
+    <!-- Top Header: Balance & Profile -->
+    <header class="top-nav-bar">
+      <div class="stone-pill balance-pill">
+        <span class="pill-label">My balance</span>
+        <div class="pill-value-row">
+          <svg class="star-coin-icon" viewBox="0 0 32 32"><use href="#star-shield-coin" /></svg>
+          <span class="gem-count" id="player-balance">1,000</span>
+        </div>
+      </div>
+
+      <div class="user-profile-header" id="btn-open-profile">
+        <div class="avatar-ring">
+          <img id="header-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%232c1c38'/%3E%3Cpath d='M32 18a10 10 0 100 20 10 10 0 000-20zm0 24c-12 0-22 6-22 14v2h44v-2c0-8-10-14-22-14z' fill='%23bd93f9'/%3E%3C/svg%3E" alt="Avatar" />
+        </div>
+        <div class="stone-pill profile-btn-label">
+          <span>Profile</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub-Ribbon Tabs -->
+    <section class="quick-action-ribbon">
+      <button class="ribbon-btn active" data-tab="tab-magicians">Magician</button>
+      <button class="ribbon-btn" data-tab="tab-deposit">Deposit</button>
+      <button class="ribbon-btn" data-tab="tab-withdraw">Withdraw</button>
+      <button class="ribbon-btn" data-tab="tab-partners">Partners</button>
+    </section>
+
+    <!-- ==================== TAB 1: MAGICIANS ==================== -->
+    <section id="tab-magicians" class="game-view-panel active">
+      <div class="parchment-summary-card">
+        <div class="income-row">
+          <span>Daily income</span>
+          <div class="income-value">
+            <svg class="star-coin-icon-sm" viewBox="0 0 32 32"><use href="#star-shield-coin" /></svg>
+            <span id="daily-income-val">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="magicians-stage-layout">
+        <!-- Main Featured Mage Slot -->
+        <div class="carved-stone-card">
+          <div class="mage-portrait-wrap">
+            <img id="main-featured-mage-img" class="main-mage-img" src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=400&q=80" alt="Main Mage" />
+            <div class="slot-count-badge" id="featured-mage-count">0</div>
+          </div>
+          
+          <!-- 0.0000000 লাইভ প্রিসিশন কাউন্টার -->
+          <div class="production-accumulator">
+            <svg class="star-coin-icon-sm" viewBox="0 0 32 32"><use href="#star-shield-coin" /></svg>
+            <span id="uncollected-crystal-count">0.0000000</span>
+          </div>
+          <button class="stone-bevel-button" id="btn-collect-crystal">COLLECT</button>
+        </div>
+
+        <!-- 3x4 Grid -->
+        <div class="mage-grid-slots" id="mage-grid"></div>
+      </div>
+
+      <!-- Power Bar -->
+      <div class="magic-level-bar-section">
+        <div class="level-meta">
+          <span>Magic</span>
+          <span id="magic-power-stat">0 🔮</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="power-progress-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <!-- Dynamic Project Shelf -->
+      <div class="dynamic-project-shelf" id="books-shelf"></div>
+
+      <div class="lang-btn">
+        <span>🇬🇧 EN ⌃</span>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: DEPOSIT ==================== -->
+    <section id="tab-deposit" class="game-view-panel">
+      <div id="deposit-methods-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </section>
+
+    <!-- ==================== TAB 3: WITHDRAW ==================== -->
+    <section id="tab-withdraw" class="game-view-panel">
+      <div id="withdraw-methods-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </section>
+
+    <!-- ==================== TAB 4: PARTNERS ==================== -->
+    <section id="tab-partners" class="game-view-panel">
+      <div class="parchment-row-card">
+        <div class="pill-value-row">
+          <svg class="star-coin-icon-sm" viewBox="0 0 32 32"><use href="#star-shield-coin" /></svg>
+          <span class="gem-count" id="partner-harvest-val">0</span>
+        </div>
+        <button class="stone-action-btn" id="btn-collect-ref">Collect</button>
+      </div>
+
+      <div class="parchment-row-card">
+        <span>🔗</span>
+        <input type="text" class="ref-input-box" id="ref-link-field" readonly />
+        <button class="stone-action-btn" id="btn-copy-ref">Copy</button>
+      </div>
+
+      <div class="perks-tri-grid">
+        <div class="perk-box">
+          <div class="perk-badge">🧙‍♂️ 10%</div>
+          <p>Get 10% from partners for purchasing a mage.</p>
+        </div>
+        <div class="perk-box">
+          <div class="perk-badge">🔮 12%</div>
+          <p>Get 12% from partners on magic purchases.</p>
+        </div>
+        <div class="perk-box">
+          <div class="perk-badge">🪙 25</div>
+          <p>Get 25 coins for each invited partner.</p>
+        </div>
+      </div>
+
+      <div class="parchment-table-box">
+        <div class="table-stats-header">
+          <div>
+            <span style="font-size: 11px; font-weight:800; color:#524639;">Partners</span>
+            <h4 id="partner-count-stat">0</h4>
+          </div>
+          <div>
+            <span style="font-size: 11px; font-weight:800; color:#524639;">Total income</span>
+            <div class="income-value">
+              <svg class="star-coin-icon-xs" viewBox="0 0 32 32"><use href="#star-shield-coin" /></svg>
+              <h4 id="partner-total-stat">0</h4>
+            </div>
+          </div>
+        </div>
+        <div class="table-columns-bar">
+          <span>Date</span>
+          <span>User</span>
+          <span>Deposit</span>
+          <span>Income</span>
+        </div>
+        <div class="empty-table-notice">No apprentice allies recruited yet</div>
+      </div>
+    </section>
+
+    <!-- USER PROFILE MODAL -->
+    <div id="profile-drawer" class="modal-overlay">
+      <div class="drawer-parchment-card">
+        <div class="drawer-header">
+          <div>
+            <div style="font-size:11px; font-weight:800; color:#605342;">User ID</div>
+            <strong id="drawer-user-id" style="font-size:16px;">515976</strong>
+          </div>
+          <button class="drawer-close-btn" id="btn-close-profile">✕</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div class="parchment-row-card">
+            <span style="font-weight: 800;">Payments History</span>
+            <button class="stone-action-btn" id="btn-open-pay-hist">Open</button>
+          </div>
+          <div class="parchment-row-card">
+            <span style="font-weight: 800;">Withdrawal History</span>
+            <button class="stone-action-btn" id="btn-open-wd-hist">Open</button>
+          </div>
+          <div class="parchment-row-card">
+            <span style="font-weight: 800;">Support Owls</span>
+            <button class="stone-action-btn" onclick="game.openSupport()">Open</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USER DEPOSIT ACTION MODAL -->
+    <div id="deposit-action-modal" class="modal-overlay">
+      <div class="drawer-parchment-card">
+        <div class="drawer-header">
+          <strong id="dep-modal-title">Deposit Funds</strong>
+          <button class="drawer-close-btn" id="btn-close-dep-modal">✕</button>
+        </div>
+        <div style="font-size:12px; margin-bottom:8px; line-height: 1.4;">
+          <strong>Official Wallet Address:</strong>
+          <div style="background:#fff; border:1px solid #baa996; padding:8px; border-radius:6px; word-break:break-all; margin-top:4px; font-weight:800; color:#17130e;" id="dep-modal-wallet"></div>
+          <button class="stone-action-btn" id="btn-copy-deposit-wallet" style="margin-top:8px; width:100%;">Copy Wallet Address</button>
+        </div>
+        <div class="user-form-group">
+          <label>Deposit Amount (Minimum $1.00):</label>
+          <input type="number" class="user-input" id="dep-input-amount" placeholder="e.g. 5" min="1" />
+        </div>
+        <div class="user-form-group">
+          <label>Transaction ID (Trnx ID):</label>
+          <input type="text" class="user-input" id="dep-input-trnx" placeholder="Paste your transfer transaction hash" />
+        </div>
+        <button class="user-submit-btn" id="btn-submit-deposit-order">Submit Deposit</button>
+      </div>
+    </div>
+
+    <!-- USER WITHDRAW ACTION MODAL -->
+    <div id="withdraw-action-modal" class="modal-overlay">
+      <div class="drawer-parchment-card">
+        <div class="drawer-header">
+          <strong id="wd-modal-title">Withdraw Funds</strong>
+          <button class="drawer-close-btn" id="btn-close-wd-modal">✕</button>
+        </div>
+        <div class="user-form-group">
+          <label>Your Receiving Wallet Address:</label>
+          <input type="text" class="user-input" id="wd-input-wallet" placeholder="Enter recipient wallet address" />
+        </div>
+        <div class="user-form-group">
+          <label>Amount in Coins (Minimum $1.00 = 6000 Coins):</label>
+          <input type="number" class="user-input" id="wd-input-amount" placeholder="6000" min="6000" />
+        </div>
+        <button class="user-submit-btn" id="btn-confirm-withdraw-order" style="background:#b71c1c;">Confirm Withdrawal</button>
+      </div>
+    </div>
+
+    <!-- PAYMENTS HISTORY MODAL -->
+    <div id="pay-history-modal" class="modal-overlay">
+      <div class="drawer-parchment-card">
+        <div class="drawer-header">
+          <strong>📜 Payments History</strong>
+          <button class="drawer-close-btn" id="btn-close-pay-hist">✕</button>
+        </div>
+        <div id="pay-history-container"></div>
+      </div>
+    </div>
+
+    <!-- WITHDRAWAL HISTORY MODAL -->
+    <div id="wd-history-modal" class="modal-overlay">
+      <div class="drawer-parchment-card">
+        <div class="drawer-header">
+          <strong>📖 Withdrawal History</strong>
+          <button class="drawer-close-btn" id="btn-close-wd-hist">✕</button>
+        </div>
+        <div id="wd-history-container"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    /* ==========================================================================
+       FIREBASE CONFIGURATION
+       ========================================================================== */
+    const firebaseConfig = {
+  apiKey: "AIzaSyB33b-DO4PEieFtDuh6xfgWxeIt0eWS2ws",
+  authDomain: "magic-maining.firebaseapp.com",
+  databaseURL: "https://magic-maining-default-rtdb.firebaseio.com",
+  projectId: "magic-maining",
+  storageBucket: "magic-maining.firebasestorage.app",
+  messagingSenderId: "504944290114",
+  appId: "1:504944290114:web:ef7a1743dbd01df6b280db",
+  measurementId: "G-7Z9RP395DL"
+};
+    let db = null;
+    try {
+      if (firebase && !firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+      }
+    } catch (e) {
+      console.log("Firebase sync active:", e);
+    }
+
+    function universalCopyText(textToCopy, successMsg) {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          showCopyAlert(successMsg || "Copied successfully!");
+        }).catch(() => fallbackCopy(textToCopy, successMsg));
+      } else {
+        fallbackCopy(textToCopy, successMsg);
+      }
+    }
+
+    function fallbackCopy(textToCopy, successMsg) {
+      const textArea = document.createElement("textarea");
+      textArea.value = textToCopy;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showCopyAlert(successMsg || "Copied successfully!");
+      } catch (err) {
+        prompt("Copy manually:", textToCopy);
+      }
+      document.body.removeChild(textArea);
+    }
+
+    function showCopyAlert(msg) {
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.notificationOccurred("success");
+      }
+      alert(msg);
+    }
+
+    class NSMageUserApp {
+      constructor() {
+        this.tg = window.Telegram?.WebApp || null;
+
+        const randomUID = Math.floor(100000 + Math.random() * 900000).toString();
+
+        this.state = {
+          userId: randomUID,
+          botUsername: "nsmage_bot",
+          balance: 1000.0,
+          uncollected: 0.0000000,
+          dailyIncome: 0,
+          power: 0,
+          featuredCount: 0,
+          featuredImage: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=400&q=80",
+          partnerHarvest: 0,
+          partnersCount: 0,
+          gridSlots: Array(12).fill(null).map(() => ({ count: 0, img: null, name: "" })),
+          
+          adminProjects: [],
+          userPurchasedCounts: {},
+
+          // মেথডগুলো ডিফল্ট খালি থাকবে (Firebase থেকে লোড হবে)
+          depositMethods: [],
+          withdrawMethods: [],
+
+          depositOrders: [],
+          withdrawOrders: [],
+          
+          // অফলাইন মাইনিং টাইমস্ট্যাম্প
+          lastTimestamp: Date.now()
+        };
+
+        this.currentSelectedDeposit = null;
+        this.currentSelectedWithdraw = null;
+      }
+
+      init() {
+        this.load();
+
+        if (this.tg) {
+          this.tg.ready();
+          this.tg.expand();
+          if (this.tg.initDataUnsafe?.user) {
+            const u = this.tg.initDataUnsafe.user;
+            if (!this.state.userId || this.state.userId === "515976") {
+              this.state.userId = String(u.id);
+            }
+            if (u.photo_url) document.getElementById("header-avatar").src = u.photo_url;
+          }
+        }
+
+        // Firebase থেকে মেথড ও প্রজেক্ট সিঙ্ক করা
+        this.syncWithFirebase();
+
+        // অফলাইন সময়ে মাইনিং হওয়া কয়েন হিসেব করে যোগ করা
+        this.calculateOfflineMining();
+
+        this.bindEvents();
+        this.render();
+        this.startEngine();
+      }
+
+      // অফলাইন মাইনিং ক্যালকুলেশন লজিক
+      calculateOfflineMining() {
+        if (this.state.dailyIncome > 0 && this.state.lastTimestamp) {
+          const now = Date.now();
+          const elapsedSeconds = Math.max(0, (now - this.state.lastTimestamp) / 1000);
+          
+          // প্রতি সেকেন্ডের রেট হিসাব করে অফলাইনের জমে থাকা কয়েন যোগ
+          const ratePerSecond = this.state.dailyIncome / 86400;
+          const offlineMined = elapsedSeconds * ratePerSecond;
+          
+          this.state.uncollected += offlineMined;
+          this.state.lastTimestamp = now;
+          this.save();
+        } else {
+          this.state.lastTimestamp = Date.now();
+          this.save();
+        }
+      }
+
+      syncWithFirebase() {
+        if (!db) return;
+        // Global Methods & Shop Projects listener
+        db.collection("gameSettings").doc("methods").onSnapshot(doc => {
+          if (doc.exists) {
+            const data = doc.data();
+            if (data.depositMethods) this.state.depositMethods = data.depositMethods;
+            if (data.withdrawMethods) this.state.withdrawMethods = data.withdrawMethods;
+            if (data.adminProjects) this.state.adminProjects = data.adminProjects;
+            if (data.featuredImage) this.state.featuredImage = data.featuredImage;
+            if (data.botUsername) this.state.botUsername = data.botUsername;
+            if (data.supportLink) this.state.supportLink = data.supportLink;
+            this.render();
+          }
+        });
+
+        // Live User Sync
+        db.collection("players").doc(this.state.userId).onSnapshot(doc => {
+          if (doc.exists) {
+            const uData = doc.data();
+            if (uData.balance !== undefined) this.state.balance = uData.balance;
+            if (uData.depositOrders) this.state.depositOrders = uData.depositOrders;
+            if (uData.withdrawOrders) this.state.withdrawOrders = uData.withdrawOrders;
+            this.render();
+          }
+        });
+      }
+
+      bindEvents() {
+        document.querySelectorAll(".ribbon-btn").forEach(btn => {
+          btn.addEventListener("click", () => this.switchTab(btn.dataset.tab));
+        });
+
+        document.getElementById("btn-collect-crystal").addEventListener("click", () => {
+          if (this.state.uncollected > 0) {
+            this.state.balance += this.state.uncollected;
+            this.state.uncollected = 0.0000000;
+            this.state.lastTimestamp = Date.now();
+            this.save();
+            this.render();
+            if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred("success");
+          }
+        });
+
+        document.getElementById("btn-open-profile").addEventListener("click", () => document.getElementById("profile-drawer").classList.add("open"));
+        document.getElementById("btn-close-profile").addEventListener("click", () => document.getElementById("profile-drawer").classList.remove("open"));
+
+        document.getElementById("btn-open-pay-hist").addEventListener("click", () => {
+          this.renderPayHistory();
+          document.getElementById("pay-history-modal").classList.add("open");
+        });
+        document.getElementById("btn-close-pay-hist").addEventListener("click", () => document.getElementById("pay-history-modal").classList.remove("open"));
+
+        document.getElementById("btn-open-wd-hist").addEventListener("click", () => {
+          this.renderWdHistory();
+          document.getElementById("wd-history-modal").classList.add("open");
+        });
+        document.getElementById("btn-close-wd-hist").addEventListener("click", () => document.getElementById("wd-history-modal").classList.remove("open"));
+
+        document.getElementById("btn-close-dep-modal").addEventListener("click", () => document.getElementById("deposit-action-modal").classList.remove("open"));
+        
+        document.getElementById("btn-copy-deposit-wallet").addEventListener("click", () => {
+          const w = document.getElementById("dep-modal-wallet").innerText.trim();
+          universalCopyText(w, "Official Wallet Address Copied!");
+        });
+
+        document.getElementById("btn-submit-deposit-order").addEventListener("click", () => {
+          const amountUSD = parseFloat(document.getElementById("dep-input-amount").value);
+          const trnxId = document.getElementById("dep-input-trnx").value.trim();
+
+          if (!amountUSD || amountUSD < 1) {
+            alert("Minimum deposit is $1.00");
+            return;
+          }
+          if (!trnxId) {
+            alert("Please paste your Transaction ID (Trnx ID)!");
+            return;
+          }
+
+          const order = {
+            id: Date.now(),
+            userId: this.state.userId,
+            method: this.currentSelectedDeposit.name,
+            amountUSD: amountUSD,
+            crystalsToCredit: Math.floor(amountUSD * (this.currentSelectedDeposit.rate || 10000)),
+            trnxId: trnxId,
+            status: "pending",
+            time: new Date().toLocaleString()
+          };
+
+          this.state.depositOrders.push(order);
+          this.save();
+          document.getElementById("deposit-action-modal").classList.remove("open");
+          document.getElementById("dep-input-amount").value = "";
+          document.getElementById("dep-input-trnx").value = "";
+
+          alert("Deposit request submitted! Once verified by grandmaster, coins will be added to your UID.");
+        });
+
+        document.getElementById("btn-close-wd-modal").addEventListener("click", () => document.getElementById("withdraw-action-modal").classList.remove("open"));
+        document.getElementById("btn-confirm-withdraw-order").addEventListener("click", () => {
+          const recipientWallet = document.getElementById("wd-input-wallet").value.trim();
+          const amountCrystals = parseFloat(document.getElementById("wd-input-amount").value);
+          const minRequired = this.currentSelectedWithdraw.min || 6000;
+
+          if (!recipientWallet) {
+            alert("Please enter recipient wallet address!");
+            return;
+          }
+          if (!amountCrystals || amountCrystals < minRequired) {
+            alert(`Minimum withdrawal is ${minRequired} coins!`);
+            return;
+          }
+          if (this.state.balance < amountCrystals) {
+            alert("Insufficient coin balance!");
+            return;
+          }
+
+          this.state.balance -= amountCrystals;
+          const order = {
+            id: Date.now(),
+            userId: this.state.userId,
+            method: this.currentSelectedWithdraw.name,
+            recipientWallet: recipientWallet,
+            amountCrystals: amountCrystals,
+            status: "pending",
+            time: new Date().toLocaleString()
+          };
+
+          this.state.withdrawOrders.push(order);
+          this.save();
+          this.render();
+          document.getElementById("withdraw-action-modal").classList.remove("open");
+          document.getElementById("wd-input-wallet").value = "";
+          document.getElementById("wd-input-amount").value = "";
+
+          alert("Withdrawal request submitted for processing!");
+        });
+
+        document.getElementById("btn-copy-ref").addEventListener("click", () => {
+          const link = document.getElementById("ref-link-field").value.trim();
+          universalCopyText(link, "Invite link copied to clipboard!");
+        });
+
+        // ব্রাউজার বা অ্যাপ বন্ধ করার আগে সর্বশেষ সময় সেভ করা
+        window.addEventListener("beforeunload", () => {
+          this.state.lastTimestamp = Date.now();
+          this.save();
+        });
+
+        // ডকুমেন্ট হাইড বা ব্যাকগ্রাউন্ডে গেলেও সময় আপডেট করা
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden) {
+            this.state.lastTimestamp = Date.now();
+            this.save();
+          } else {
+            this.calculateOfflineMining();
+            this.render();
+          }
+        });
+      }
+
+      switchTab(tabId) {
+        document.querySelectorAll(".ribbon-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tabId));
+        document.querySelectorAll(".game-view-panel").forEach(p => p.classList.toggle("active", p.id === tabId));
+      }
+
+      openDepositModal(method) {
+        this.currentSelectedDeposit = method;
+        document.getElementById("dep-modal-title").innerText = `Deposit via ${method.name}`;
+        document.getElementById("dep-modal-wallet").innerText = method.wallet;
+        document.getElementById("deposit-action-modal").classList.add("open");
+      }
+
+      openWithdrawModal(method) {
+        this.currentSelectedWithdraw = method;
+        document.getElementById("wd-modal-title").innerText = `Withdraw via ${method.name}`;
+        document.getElementById("wd-input-amount").placeholder = `Minimum ${method.min} Coins`;
+        document.getElementById("wd-input-amount").min = method.min;
+        document.getElementById("withdraw-action-modal").classList.add("open");
+      }
+
+      buyProject(project) {
+        const bought = this.state.userPurchasedCounts[project.id] || 0;
+        const maxLimit = project.maxLimit || 1;
+
+        if (bought >= maxLimit) {
+          alert(`You have already reached the maximum limit (${maxLimit}) for this project!`);
+          return;
+        }
+
+        if (this.state.balance >= project.cost) {
+          this.state.balance -= project.cost;
+          this.state.dailyIncome += (project.rate * 24);
+          this.state.power += project.power;
+          this.state.featuredCount += 1;
+          this.state.userPurchasedCounts[project.id] = bought + 1;
+          this.state.lastTimestamp = Date.now();
+
+          let placed = false;
+          for (let i = 0; i < this.state.gridSlots.length; i++) {
+            if (this.state.gridSlots[i].name === project.name) {
+              this.state.gridSlots[i].count += 1;
+              placed = true;
+              break;
+            }
+          }
+          if (!placed) {
+            for (let i = 0; i < this.state.gridSlots.length; i++) {
+              if (this.state.gridSlots[i].count === 0) {
+                this.state.gridSlots[i] = {
+                  count: 1,
+                  img: project.img,
+                  name: project.name
+                };
+                placed = true;
+                break;
+              }
+            }
+          }
+          if (!placed) {
+            this.state.gridSlots[0].count += 1;
+          }
+
+          this.save();
+          this.render();
+          if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred("success");
+          alert(`Purchased ${project.name}! (${bought + 1}/${maxLimit} active)`);
+        } else {
+          alert(`Insufficient balance! Needs ${project.cost} coins.`);
+        }
+      }
+
+      render() {
+        document.getElementById("player-balance").innerText = Math.floor(this.state.balance).toLocaleString();
+        document.getElementById("uncollected-crystal-count").innerText = Number(this.state.uncollected).toFixed(7);
+        document.getElementById("daily-income-val").innerText = Math.round(this.state.dailyIncome);
+        document.getElementById("magic-power-stat").innerText = `${this.state.power.toLocaleString()} 🔮`;
+        document.getElementById("power-progress-fill").style.width = `${Math.min(100, (this.state.power / 10000) * 100)}%`;
+        document.getElementById("featured-mage-count").innerText = this.state.featuredCount;
+        document.getElementById("drawer-user-id").innerText = this.state.userId;
+
+        const cleanBot = (this.state.botUsername || "nsmage_bot").replace("@", "");
+        document.getElementById("ref-link-field").value = `https://t.me/${cleanBot}?start=${this.state.userId}`;
+
+        if (this.state.featuredImage) {
+          document.getElementById("main-featured-mage-img").src = this.state.featuredImage;
+        }
+
+        const grid = document.getElementById("mage-grid");
+        grid.innerHTML = "";
+        this.state.gridSlots.forEach(slotData => {
+          const slot = document.createElement("div");
+          const isUnlocked = slotData.count > 0;
+          slot.className = `slot-item ${!isUnlocked ? 'locked' : ''}`;
+          if (isUnlocked && slotData.img) {
+            slot.innerHTML = `
+              <img src="${slotData.img}" class="slot-img" alt="${slotData.name}" />
+              <span class="slot-name">${slotData.name}</span>
+              <span class="slot-qty">${slotData.count}</span>
+            `;
+          } else {
+            slot.innerHTML = `
+              <span style="font-size: 20px; opacity: 0.35;">🔮</span>
+              <span class="slot-qty">0</span>
+            `;
+          }
+          grid.appendChild(slot);
+        });
+
+        // শপ প্রজেক্ট রেন্ডার
+        const shelf = document.getElementById("books-shelf");
+        shelf.innerHTML = "";
+        if (this.state.adminProjects.length === 0) {
+          shelf.innerHTML = `
+            <div class="empty-shelf-notice">
+              <span>No magical tomes available on shelf right now.</span>
+            </div>
+          `;
+        } else {
+          this.state.adminProjects.forEach(proj => {
+            const card = document.createElement("div");
+            card.className = "tome-card";
+            const bought = this.state.userPurchasedCounts[proj.id] || 0;
+            const maxLimit = proj.maxLimit || 1;
+            const isMax = bought >= maxLimit;
+
+            card.innerHTML = `
+              <div class="tome-img-container">
+                <img src="${proj.img}" class="tome-card-img" alt="${proj.name}" />
+              </div>
+              <div class="tome-card-name">${proj.name} (${bought}/${maxLimit})</div>
+              <div class="tome-boost-label">+${proj.rate}/hr 🔮</div>
+              <div class="tome-buy-btn ${isMax ? 'disabled' : ''}">
+                <svg class="star-coin-icon-xs" viewBox="0 0 32 32"><use href="#star-shield-coin" /></svg>
+                <span>${isMax ? 'MAX' : proj.cost}</span>
+              </div>
+            `;
+            if (!isMax) {
+              card.onclick = () => this.buyProject(proj);
+            }
+            shelf.appendChild(card);
+          });
+        }
+
+        // ডিপোজিট মেথডস লিস্ট
+        const depList = document.getElementById("deposit-methods-list");
+        depList.innerHTML = "";
+        if (this.state.depositMethods.length === 0) {
+          depList.innerHTML = `<div style="text-align:center; padding:24px; color:#5c4f3f; font-weight:800;">No deposit methods available at the moment.</div>`;
+        } else {
+          this.state.depositMethods.forEach(dm => {
+            const row = document.createElement("div");
+            row.className = "parchment-row-card";
+            row.innerHTML = `
+              <div class="token-avatar"><img src="${dm.img}" alt="${dm.name}" /></div>
+              <div class="token-detail">
+                <span class="token-name">${dm.name}</span>
+                <span class="token-sub">Minimum: 🪙 ${dm.rate || 10000} | $1.00</span>
+              </div>
+              <button class="stone-action-btn">DEPOSIT</button>
+            `;
+            row.querySelector("button").onclick = () => this.openDepositModal(dm);
+            depList.appendChild(row);
+          });
+        }
+
+        // উইথড্র মেথডস লিস্ট
+        const wdList = document.getElementById("withdraw-methods-list");
+        wdList.innerHTML = "";
+        if (this.state.withdrawMethods.length === 0) {
+          wdList.innerHTML = `<div style="text-align:center; padding:24px; color:#5c4f3f; font-weight:800;">No withdrawal methods available at the moment.</div>`;
+        } else {
+          this.state.withdrawMethods.forEach(wm => {
+            const row = document.createElement("div");
+            row.className = "parchment-row-card";
+            row.innerHTML = `
+              <div class="token-avatar"><img src="${wm.img}" alt="${wm.name}" /></div>
+              <div class="token-detail">
+                <span class="token-name">${wm.name}</span>
+                <span class="token-sub">Minimum: $1.00 | 🪙 ${wm.min}</span>
+              </div>
+              <button class="stone-action-btn">WITHDRAW</button>
+            `;
+            row.querySelector("button").onclick = () => this.openWithdrawModal(wm);
+            wdList.appendChild(row);
+          });
+        }
+      }
+
+      renderPayHistory() {
+        const c = document.getElementById("pay-history-container");
+        c.innerHTML = "";
+        if (this.state.depositOrders.length === 0) {
+          c.innerHTML = `<div style="text-align:center; padding:20px; font-weight:800; color:#5c4d3d;">No payments recorded yet.</div>`;
+          return;
+        }
+        this.state.depositOrders.forEach(o => {
+          const card = document.createElement("div");
+          card.className = "history-entry-card";
+          card.innerHTML = `
+            <div>
+              <strong>${o.method} — $${o.amountUSD}</strong>
+              <div style="font-size:10px; color:#5c4f3f;">${o.time}</div>
+              <div style="font-size:9px; color:#7a6d5f;">Trnx: ${o.trnxId}</div>
+            </div>
+            <span class="status-badge status-${o.status}">${o.status}</span>
+          `;
+          c.appendChild(card);
+        });
+      }
+
+      renderWdHistory() {
+        const c = document.getElementById("wd-history-container");
+        c.innerHTML = "";
+        if (this.state.withdrawOrders.length === 0) {
+          c.innerHTML = `<div style="text-align:center; padding:20px; font-weight:800; color:#5c4d3d;">No withdrawals recorded yet.</div>`;
+          return;
+        }
+        this.state.withdrawOrders.forEach(o => {
+          const card = document.createElement("div");
+          card.className = "history-entry-card";
+          card.innerHTML = `
+            <div>
+              <strong>${o.method} — 🪙 ${o.amountCrystals}</strong>
+              <div style="font-size:10px; color:#5c4f3f;">${o.time}</div>
+              <div style="font-size:9px; color:#7a6d5f;">To: ${o.recipientWallet}</div>
+            </div>
+            <span class="status-badge status-${o.status}">${o.status}</span>
+          `;
+          c.appendChild(card);
+        });
+      }
+
+      openSupport() {
+        const link = this.state.supportLink || "https://t.me/nsmage_support";
+        if (this.tg?.openTelegramLink) this.tg.openTelegramLink(link);
+        else window.open(link, "_blank");
+      }
+
+      startEngine() {
+        setInterval(() => {
+          if (this.state.dailyIncome > 0) {
+            const perSecond = (this.state.dailyIncome / 86400);
+            this.state.uncollected += perSecond;
+            this.state.lastTimestamp = Date.now(); // রিয়েল-টাইম টাইমস্ট্যাম্প ট্র্যাকিং
+            document.getElementById("uncollected-crystal-count").innerText = Number(this.state.uncollected).toFixed(7);
+          }
+        }, 1000);
+
+        setInterval(() => this.save(), 5000);
+      }
+
+      save() {
+        this.state.lastTimestamp = Date.now();
+        localStorage.setItem("NS_MAGE_STORAGE_USER_PANEL", JSON.stringify(this.state));
+        if (db) {
+          db.collection("players").doc(this.state.userId).set({
+            balance: this.state.balance,
+            uncollected: this.state.uncollected,
+            lastTimestamp: this.state.lastTimestamp,
+            depositOrders: this.state.depositOrders,
+            withdrawOrders: this.state.withdrawOrders,
+            dailyIncome: this.state.dailyIncome,
+            power: this.state.power,
+            gridSlots: this.state.gridSlots,
+            userPurchasedCounts: this.state.userPurchasedCounts,
+            lastActive: Date.now()
+          }, { merge: true }).catch(() => {});
+        }
+      }
+
+      load() {
+        const raw = localStorage.getItem("NS_MAGE_STORAGE_USER_PANEL");
+        if (raw) {
+          try {
+            this.state = Object.assign(this.state, JSON.parse(raw));
+          } catch(e) {}
+        }
+      }
+    }
+
+    const game = new NSMageUserApp();
+    document.addEventListener("DOMContentLoaded", () => game.init());
+  </script>
+</body>
+</html>
